@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ElGamal</title>
+    <style>
+        .temp{
+            float: left;
+            width: 123px;
+        }
+        .tmp{
+            float: left;
+            width: 100px;
+        }
+    </style>
+</head>
+<body>
+    <p style="font-size: 20px;">Mô tả: Sơ đồ hệ mật mã khoá công khai ElGamal được cho bởi:<br>
+        <span class="tmp">&nbsp;</span>S = (P , C , K , E , D ), <br>
+        trong đó: P = Zp*; C = Zp* X Zp*, với p là một số nguyên tố; <br>
+        <span class="tmp">&nbsp;</span>  K = {K = (K', K'') : K' =(p, α, β) , K'' = a , 	β = α ^ a mod p}, <br>
+        (ở đây α là một phần tử nguyên thuỷ theo mod p, tức của Zp*.) <br>
+        Các thuật toán lập mã eK' = E(K',.) và giải mã dK'' = D (K'',.) được xác định như  sau: <br>
+        - Với mỗi x thuộc P = Zp*, để lập mật mã cho x trước hết ta chọn thêm một số ngẫu nhiên <br>
+         k thuộc Z(p -1) rồi tính: <br>
+        <span class="tmp">&nbsp;</span>eK'(x,k) = (y1, y2), với: y1 = α^k mod p; y2 = x.β^k mod p <br>
+        - Với mọi số ngẫu nhiên k bất kỳ, ta đều xem eK'(x,k) là mật mã  của x. Và  thuật  toán <br>
+        giải mã được xác định bởi: <br>
+        <span class="tmp">&nbsp;</span>dK''(y1, y2) = y2.(y1^a)^(-1) mod p. <br>
+        - Các phép lập mật mã và giải mã được xác định như vậy là hợp thức, vì ta có với mọi x   <br>
+        thuộc P = Zp* và mọi k thuộc Z(p -1) : <br>
+        <span class="tmp">&nbsp;</span>dK''(eK'(x,k)) = x.(β^k).(α^(k.a))^(-1) mod p = x.(β^k).(β^(-k)) = x;<br>
+        Ý tưởng tính toán với số lớn: Coi các số đầu là một chuỗi và sau đó tự xây dựng các hàm tính toán: cộng, <br>
+        trừ, nhân, chia với các chuỗi số đó. Vì vậy nên thực hiện được với số lớn.
+        </p> <br>
+
+    <span class="temp">p =</span><input type="number" id='p' style="width: 50%;" /> <br><br>
+    <span class="temp">alpha = </span><input type="number" id='alpha' style="width: 50%;" /> <br><br>
+    <span class="temp">a =</span><input type="number" id='a' style="width: 50%;" /> <br><br>
+    <span class="temp">Select k = </span><input type="number" id='k' style="width: 50%;" /> <button id='random' onclick="randomK();">Random</button> <br><br>
+    <span class="temp">Thông báo: x = </span><input type="number" id='x' style="width: 50%;" /> <br><br>
+    <!-- Giải mã: y = (y1 = <input type="number" id='y1' style="width: 40%;" />; y2 = <input type="number" id='y2' style="width: 40%;" />;) <br><br> -->
+    <button onclick="main();">Xử lý</button> <br> <br>
+    RESULT: <br>
+    <span id="result" style="font-size: 20px; font-weight: bold;"></span>
+    <script>
+        function main() {
+            var p, alpha, a, beta, k, x, y1, y2, y1_result, y2_result, x_result;
+            p = document.getElementById('p').value;
+            alpha = document.getElementById('alpha').value;
+            a = document.getElementById('a').value;
+            k = document.getElementById('k').value;
+            x = document.getElementById('x').value;
+            if(k == '') 
+            {
+                alert('Nhập k hoặc nhấn để random số k!');
+                return;
+            }
+            beta      = a_power_b_mod_m(alpha, a, p);
+            y1_result = a_power_b_mod_m(alpha, k, p);
+            y2_result = divTwoBigNumber(multiplyTwoBigNumber(x, a_power_b_mod_m(beta, k, p)), p)[1];
+           
+            x_result = divTwoBigNumber(multiplyTwoBigNumber(b_1_mod_a(p,a_power_b_mod_m(y1_result, a, p)), y2_result),p)[1];
+            
+            var result = document.getElementById('result');
+            result.innerHTML = `p = ${p}; α = ${alpha}; a = ${a}; k = ${k}; x = ${x}; y1 = ${y1_result}; y2 = ${y2_result} <br>
+                                β = ${beta} <br>
+                                Mã hóa: ${x!="" ? "(y1, y2) = (" + y1_result + "; "+y2_result+")":""} <br>
+                                Giải mã: ${y1!="" && y2!="" ? "x' = "+x_result:""} <br>
+                                So sánh x và x'. Nếu x==x' thì thuật toán chính xác và ngược lại.`; 
+        }
+
+        function randomK() 
+        {
+            var k = document.getElementById('k');
+            var x = Math.floor(Math.random() * 1000) + 1;
+            k.value = x;
+            return;
+        }
+        function StringToNum (a, k = 0) 
+        {
+            return a.charCodeAt(k) - 48;
+        }
+        function NumToString (a) 
+        {
+            return String.fromCharCode(a + 48);
+        }
+        function normalize(a, b) 
+        {
+            var result = [];
+            while (a.length < b.length) {
+                a = '0' + a;
+            }
+            while (a.length > b.length) {
+                b = '0' + b;
+            }
+            result.push(a);
+            result.push(b); 
+            return result;
+        }
+        function compares(a, b)  
+        {  
+            var x,y;
+            [x,y] = normalize(a == ""? "0" : a,b == ""? "0" : b);
+            if(x > y) {
+                return 1;
+            }
+            else if(x == y) {
+                return 0;
+            }
+            else {
+                return -1;
+            }
+        }
+        function addTwoBigNumber (a, b) 
+        {
+            if(a[0] == '-' && b[0] == '-') {           
+                var x = a.substring(1, a.length);
+                var y = b.substring(1, b.length);
+                return '-'+addTwoBigNumber(x,y);
+            }
+            if(a[0] == '-' && b[0] != '') { 
+                return subtractTwoBigNumber(b, a.substring(1, a.length));
+            }
+            if(a[0] != '-' && b[0] == '-') {
+                return subtractTwoBigNumber(a, b.substring(1, b.length));
+            }
+            if(a[0] != '-' && b[0] != '-') {
+                var result = "";
+                var [x, y] = normalize(a,b);
+                var nho = 0;
+                for (var i = x.length - 1; i >=0; i--) {
+                    var sum = StringToNum(x,i) + StringToNum(y,i) + nho;
+                    if(sum >= 10) {
+                        nho = 1;
+                        sum = sum - 10;
+                    }
+                    else {
+                        nho = 0;
+                    }
+                    result = NumToString(sum) + result;
+                }
+                if(nho == 1) {
+                    result = "1" + result;
+                }
+                return result;
+            }
+        }
+        function subtractTwoBigNumber (a, b) 
+        {         
+            if(a[0] == '-' && b[0] != '-') {   
+                var result = addTwoBigNumber(a.substring(1,a.length), b);
+                return ('-' + result);
+            }
+            if(a[0] == '-' && b[0] == '-') {    
+                return subtractTwoBigNumber(a.substring(1, a.length), b.substring(1, b.length));
+            }
+            if(a[0] != '-' && b[0] == '-') {      
+                var lenB = b.length;
+                return addTwoBigNumber(a, b.substring(1, lenB));
+            }
+            if(a[0] != '-' && b[0] != '-') {
+                var [x,y] = normalize(a,b);
+                if(x < y) {
+                    return '-'+ subtractTwoBigNumber(y,x);
+                }
+                else {
+                    var nho = 0;
+                    var result = "";
+                    for (var i = x.length - 1; i >= 0; i--) {
+                        var sub = StringToNum(x,i) - StringToNum(y,i) - nho;
+                        if(sub < 0) {
+                            nho = 1;
+                            sub = 10 + sub;
+                        }
+                        else {
+                            nho = 0;
+                        }
+                        result = NumToString(sub) + result;
+                    }
+                    while (result[0] == '0' && result.length > 1) {
+                        result = result.substring(1, result.length);
+                    }
+                    return result;
+                }
+            }
+        }
+        function nhanSoLon_Int (a, b) 
+        {
+            if(b==0) {
+                return "0";
+            }
+            else {
+                var result = a;
+                for(var i = 1; i < b; i++) {
+                    result = addTwoBigNumber(result, a);
+                }
+                return result;
+            }
+        }
+        function multiplyTwoBigNumber(a,b) 
+        {
+            var x,y;
+            var dau = 1;        
+            if(a[0] == '-' && b[0] == '-') {
+                dau = 1;
+                x = a.substring(1,a.length);
+                y = b.substring(1,b.length);
+            }
+            else if((a[0] == '-' && b[0] != '-') || (a[0] != '-' && b[0] == '-')) {
+                dau = 0;
+                if(a[0] == '-' && b[0] != '-') {
+                    x = a.substring(1,a.length);
+                    y = b;
+                }
+                else {
+                    x = a;
+                    y = b.substring(1, b.length);
+                }
+            }
+            else if(a[0] != '-' && b[0] != '-') 
+            {
+                x = a;
+                y = b;
+                dau = 1;
+            }
+            var dem = 0;
+            var result = "0";
+            if(x.length < y.length) 
+            {
+                [x,y] = [y,x];
+            }
+            for(var i = y.length - 1; i >= 0; i--) 
+            {
+                var tmp = nhanSoLon_Int(x, StringToNum(y,i));
+                for(var j = 0; j < dem; j++) {
+                    tmp = tmp +'0';
+                }
+                dem ++;
+                result = addTwoBigNumber(result, tmp);
+            }
+            return (dau == 0 ? '-' : '')+result;
+        }
+        function divTwoBigNumber(a, b) 
+        {       
+            if(a.length < b.length) {
+                return [0, a];      
+            }
+            var result = "";
+            var num_div = "";
+            for (var i = 0; i < a.length; i++) {
+                num_div += a[i];
+                if(compares(num_div, b) == -1) {
+                    result += '0';
+                    continue;
+                }
+                for(var j = 0; j <= 9; j++) {
+                    if(compares(num_div, nhanSoLon_Int(b, j)) == -1) {
+                        break;
+                    }
+                }
+                result += NumToString(j-1);
+                num_div = subtractTwoBigNumber(num_div, nhanSoLon_Int(b, j-1));
+            }
+            while (result[0] == '0' && result.length > 1) {
+                result = result.substring(1, result.length);
+            }
+            while (num_div[0] == '0' && num_div.length > 1) {
+                num_div = num_div.substring(1, num_div.length);
+            }
+            return [result, num_div];
+        }
+        function gcd (a, b) 
+        {
+            if(b == '0')    {
+                return a;
+            }
+            return gcd(b, divTwoBigNumber(a,b)[1]);
+        }
+        function b_1_mod_a(a, b) 
+        {               
+            var x, y, x1 = '0', x2 = '1', y1 = '1', y2 = '0', q, r;
+            var _a = a;
+            if(gcd(a,b) != '1') {
+                alert('Hai số a và b không nguyên tố cùng nhau.');
+                return;
+            }
+            while (b != '0') {
+                q = divTwoBigNumber(a,b)[0];
+                r = divTwoBigNumber(a,b)[1];
+                x = subtractTwoBigNumber(x2, multiplyTwoBigNumber(q,x1));
+                y = subtractTwoBigNumber(y2, multiplyTwoBigNumber(q,y1));
+                a = b;
+                b = r;
+                x2 = x1;
+                x1 = x;
+                y2 = y1;
+                y1 = y;
+                if(b == '0' && y2[0] == '-') {
+                    y2 = addTwoBigNumber(_a,y2);
+                }
+            }
+            return y2;
+        }
+        function convert_bina (n) 
+        {
+            var result = "";
+            while (n!= '0') {
+                var [_n, du] = divTwoBigNumber(n, '2');
+                n = _n;
+                result = du + result;
+            }
+            return result;
+        }
+        function a_power_b_mod_m (b, n, m) 
+        {    
+            var n_bina = convert_bina(n);
+            var x = '1';
+            var power = divTwoBigNumber(b,m)[1];
+            for (i=n_bina.length - 1; i>=0; i--) {
+                if(n_bina[i] == '1') {
+                    x = divTwoBigNumber(multiplyTwoBigNumber(x,power), m)[1];
+                }
+                power = divTwoBigNumber(multiplyTwoBigNumber(power, power), m)[1];
+            }
+            return x;
+        }
+        function a_power_b_int (a, b) 
+        {
+            var result = "1";
+            for (i=1; i<= b; i++) {
+                result = multiplyTwoBigNumber(result, a);
+            }
+            return result;
+        }
+        function a_power_b_big (a, b) 
+        {
+            var result = "1";
+            for (i="1"; subtractTwoBigNumber(b, i) >= "0"; addTwoBigNumber(i,"1")) {
+                result = multiplyTwoBigNumber(result, a);
+            }
+            return result;
+        }
+    </script>
+</body>
+</html>

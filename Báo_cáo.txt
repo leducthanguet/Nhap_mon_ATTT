@@ -1,0 +1,8 @@
+Báo cáo:
+- Do cả ba file em đều xử lý số lớn bằng tính toán trên chuỗi. Vì vậy, nên số lớn đúng yêu cầu của thầy ạ.
+- Về phần hệ mật RSA và ElGamal, do có nhiều thời gian chuẩn bị nên em đã chuẩn bị đúng yêu cầu của thầy ạ và em 
+  đã chuyển code về bên JS kết hợp với html để cho trực quan hóa và hình dung dễ dàng hơn ạ. Ở đây, chúng ta 
+  có thể nhập đầu bắt kỳ
+- Còn về phần Elliptic, do thời gian hơi gấp, nhưng em cũng đã xử lý được với số lớn trong khoảng 50 bit - 160bit
+  . Do em xử lý chuỗi nên việc tính toán với số lớn không quá phức tạp ạ. Tuy nhiên, em chưa chuyển về Js + html 
+  để trực quan hóa bài toán với đầu vào bất kỳ mà chỉ để ở dạng Python thôi ạ.
